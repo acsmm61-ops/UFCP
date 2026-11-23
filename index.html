@@ -83,6 +83,7 @@ input[type=range]{padding:0}
 @media(prefers-reduced-motion:reduce){.win .bl,.win.fl .c{animation:none}}
 html{background:#0c0e10;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
 button,.knob{-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+.plate{text-align:center;font:600 calc(100cqw/30)/1 'Barlow Condensed',sans-serif;letter-spacing:.14em;color:#c9d2dc;margin:-.4cqw 0 2.6cqw;padding:1.2cqw 0;border-top:1px solid #3a4148;border-bottom:1px solid #3a4148;text-shadow:0 1px 0 #000}
 </style>
 </head>
 <body>
@@ -90,7 +91,7 @@ button,.knob{-webkit-tap-highlight-color:transparent;-webkit-user-select:none;us
 <header class="top"><h1>KT-1T UFCP</h1><p>Ön Kontrol Paneli (Up Front Control Panel) — eğitim amaçlı, işlevsel simülatör. Tuşlar fareyle veya klavyeyle çalışır.</p><button class="btn" id="reset">Paneli sıfırla</button></header>
 <main class="layout">
 <section class="cockpit">
-<div class="ufcp" id="ufcp"><div class="grid" id="grid"></div></div>
+<div class="ufcp" id="ufcp"><div class="plate">Ahmet Can Sağlam hayratıdır</div><div class="grid" id="grid"></div></div>
 <div class="hintline"><div><b id="pgname"></b></div><div id="hint"></div><div id="msg" role="status"></div></div>
 <div class="lower"><h2>Alt panel (Lower Panel)</h2><div class="ctl" id="ctl"></div></div>
 </section>
