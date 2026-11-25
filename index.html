@@ -117,6 +117,7 @@ button,.knob{-webkit-tap-highlight-color:transparent;-webkit-user-select:none;us
 <li>COM1: <code>COM1</code> → <code>W2</code> → <code>126200</code> → <code>ENT</code>; <code>±</code> SQ/TONE açar</li>
 <li>Waypoint: <code>WAY</code> → <code>W1</code> → <code>7</code> <code>ENT</code> → <code>W3</code> → girişe göre</li>
 <li>Offset: alt panelde OFFSET = ON, <code>OFS</code> sayfasında değer gir.</li>
+<li><b>± tuşu:</b> Veri girişinde <code>W1 (EGI, DIR)</code> ICAO/waypoint harf modu · <code>COM W2</code> Have Quick “A” · <code>COM W4</code> SQ/TONE ON-OFF · <code>TACAN W2</code> X/Y · <code>IFF</code> mod aç/kapat (Mod 3 ↔ Mod C bağlı) · <code>WAY</code> N/S, E/W · <code>OFS</code> sağ/sol · <code>VNAV W3</code> VANG işareti</li>
 <li>Sayıyı silmek: <code>CLR</code> bir kez son hane, iki kez alan, üç kez çıkış. Klavye: rakamlar, Enter = ENT, Backspace = CLR, Esc = RTN, +/- = ±.</li></ol></div>
 </aside></main></div>
 <script>
@@ -145,13 +146,13 @@ function init(){
  const pre=i=>{const a=[null];for(let n=1;n<=40;n++)a.push({k:i?(n===1?243000:n===2?363200:snap(300000+n*1725)):(n===1?121500:n===2?126200:snap(130000+n*425)),hq:false});return a;};
  const vp=[null];for(let n=1;n<=20;n++)vp.push(n===17?11590:10800+(n-1)*35);
  const tp=[null];for(let n=1;n<=20;n++)tp.push(n===5?{ch:126,xy:'Y'}:{ch:n*6,xy:'X'});
- const ip=[null];for(let n=1;n<=8;n++)ip.push({M1:'73',M2:'0000',M3A:'1200',en:{M1:n===1,M2:false,M3A:false,MC:false}});
+ const ip=[null];for(let n=1;n<=8;n++)ip.push({M1:'73',M2:'0000',M3A:'1200',en:{M1:n===1,M2:false,M3A:false,MC:false,M4:false}});
  Object.assign(S,{wp,seqs,E:null,msg:{t:'',u:0},fl:{i:-1,u:0},lastT:now(),
   ub:70,hb:70,amb:60,rc:50,rb:50,sw:{offset:'OFF',test:'OFF',text:'NORM',mode:'AUTO',tandem:'NORM'},testStep:1,
   pw:{nav:true,c1:true,c2:true,iff:'NORM'},fuel:'NORMAL',fuelAck:false,sim:{run:false,speed:1},
   master:'NAV',sub:'EGI',page:null,egi:{steer:1,icao:null,until:now()+8000},seqNav:{seq:1,idx:0},fac:{src:'VOR'},crs:{EGI:0,SEQ:0,FAC:0},
   vnav:{on:false,valt:null,vdist:null,vang:null},aa:{sub:'LCOS',ws:30,rng:700,msl:'WARM'},ag:{sub:'MAN',dx:20,dy:15,rtcl:186},
-  nt:'VOR',vor:{p:17,man:10800,pre:vp},tcn:{p:5,man:{ch:1,xy:'X'},pre:tp,mode:'REC'},iff:{p:1,man:{M1:'00',M2:'0000',M3A:'0000',en:{M1:false,M2:false,M3A:false,MC:false}},pre:ip,mi:0,id:0},
+  nt:'VOR',vor:{p:17,man:10800,pre:vp},tcn:{p:5,man:{ch:1,xy:'X'},pre:tp,mode:'REC'},iff:{p:1,man:{M1:'00',M2:'0000',M3A:'0000',en:{M1:false,M2:false,M3A:false,MC:false,M4:false}},pre:ip,mi:0,id:0},
   com:[0,1].map(i=>({p:2,man:{k:i?225000:118100,hq:false},pre:pre(i),mode:'T/R+G',tog:'SQ',sq:'OFF',tone:'OFF',pend:null})),
   way:{n:1,pi:0},seqUI:{n:1,off:0,lvl:1},ofs:{mode:'XY',x:0,xs:'R',y:0,b:0,r:0,valid:false,done:false},
   sys:{sub:0,ralt:450,bar:600,unit:'INHG',set:2992,sel:-1,lt:{i:-1,t:0},hdg:270,ref:'MAG',b1:'EGI',b2:'VOR',spd:240,st:'GS',pitch:'WL',csym:'CDI',dclr:0},
@@ -184,7 +185,7 @@ function clr(){const E=S.E;if(!E)return;
  E.clr++;if(E.clr===1)E.buf.pop();else if(E.clr===2)E.buf=[];else S.E=null;render();}
 function pmKey(){const E=S.E;
  if(E){const sp=E.spec;if(sp.pmOpts)E.pm=(E.pm+1)%sp.pmOpts.length;else if(sp.alpha){E.pm=E.pm?0:1;E.buf=[];}else if(sp.masks){E.pm=(E.pm+1)%sp.masks.length;E.buf=E.buf.slice(0,slots(E));}render();return;}
- const m=model();if(m.pm)m.pm();render();}
+ const m=model();if(m.pm)m.pm();else msg('± bu sayfada işlevsiz: önce bir pencereye basıp veri girişini başlat');render();}
 /* ---- seyrüsefer hesapları ---- */
 const steerLabel=()=>S.egi.icao&&S.egi.steer===58?S.egi.icao:String(S.egi.steer);
 function navBase(){
@@ -206,7 +207,7 @@ function vnavCalc(){const v=S.vnav,b=navBase();
  if(valt-(b.pt.elev||0)<1000)return{ok:false,why:'VALT, nokta irtifasının <1000 ft üstünde'};
  if(v.vdist==null)return{ok:false,why:'VDIST girilmedi'};
  const rem=Math.max(dist(ac,b.pt)-v.vdist,0.1);let a=Math.atan2(valt-ac.alt,rem*6076.12)/RAD;
- if(v.vang!=null)a=Math.sign(a||1)*v.vang;
+ if(v.vang!=null)a=v.vang;
  return{ok:true,ang:clamp(a,-10,10),valt};}
 const egiStatus=()=>now()<S.egi.until?'ALIGN':'NAV';
 function tick(){
@@ -235,7 +236,8 @@ function directTo(n,icao){if(icao){const e=DB[icao];if(!e)return'Veri tabanında
  S.sub='EGI';const p=S.wp[S.egi.steer];if(p)S.crs.EGI=Math.round((bearing(ac,p)-MAGVAR+360)%360);S.ofs.done=false;return true;}
 function crsW(sub){return{l:'CRS',r:n3(S.crs[sub]),edit:numSpec(3,s=>{const n=intIn(s,0,360);if(n==null)return false;S.crs[sub]=n%360;return true;},{min:1,empty:()=>{const b=navBase();if(b&&sub!=='FAC'){S.crs[sub]=Math.round((bearing(ac,b.pt)-MAGVAR+360)%360);msg('Direct-To: course '+n3(S.crs[sub]));}}})};}
 const vorF=()=>S.vor.p?S.vor.pre[S.vor.p]:S.vor.man;
-const tcnC=()=>S.tcn.p?S.tcn.pre[S.tcn.p]:S.tcn.man;
+const pairCh=f=>{if(f<10800||f>11795)return null;const s=f<=11225?Math.floor((f-10800)/5):Math.floor((f-11230)/5),b=f<=11225?17:70;return{ch:b+(s>>1),xy:s%2?'Y':'X'};};
+const tcnC=()=>S.tcn.mode==='SLV'?(pairCh(vorF())||{ch:0,xy:'X'}):(S.tcn.p?S.tcn.pre[S.tcn.p]:S.tcn.man);
 const tcnStr=c=>c.ch+c.xy;
 MS.NAV=()=>{const sub=S.sub;
  if(sub==='OFF')return{name:'NAV · alt mod OFF',w:[{l:'NAV',r:'OFF'},BL,BL,BL],hint:'NAV tuşuna tekrar bas: OFF → EGI → SEQ → FAC.'};
@@ -255,29 +257,30 @@ MS.AG=()=>{const g=S.ag,ed=(k,n,max)=>numSpec(n,s=>{const v=intIn(s,0,max);if(v=
 PG.VNAV=()=>{const v=S.vnav,c=vnavCalc();
  return{name:'NAV · VNAV',rtn:()=>{S.page=null;},w:[{l:'VNAV',r:v.on?'ON':'OFF',tap:()=>{v.on=!v.on;if(v.on&&!vnavCalc().ok)msg('VNAV pasif: '+vnavCalc().why);}},
   {l:'VALT',r:v.valt==null?'':Math.round(v.valt/100),edit:numSpec(3,s=>{const n=intIn(s,10,350);if(n==null)return'VALT 10-350 (yüzlük ft: 1000-35000 ft)';v.valt=n*100;v.vang=null;return true;},{min:1})},
-  {l:'VANG',r:c.ok?(c.ang>=0?'+':'')+c.ang.toFixed(1):'--',edit:numSpec(2,s=>{const n=intIn(s,0,10);if(n==null)return'VANG 0-10°';v.vang=n;return true;},{min:1})},
+  {l:'VANG',r:c.ok?(c.ang>=0?'+':'')+c.ang.toFixed(1):'--',edit:{mask:'p##',pmOpts:['+','-'],min:1,commit:(s,pm)=>{const n=intIn(s,0,10);if(n==null)return'VANG 0-10°';v.vang=pm?-n:n;return true;}}},
   {l:'VDIST',r:v.vdist??'',edit:numSpec(2,s=>{const n=intIn(s,0,99);if(n==null)return false;v.vdist=n;v.vang=null;return true;},{min:1})}],
  inc:d=>{v.valt=clamp((v.valt??10000)+d*100,1000,35000);v.vang=null;},
- hint:c.ok?'VNAV aktif: referans süzülüş/tırmanış açısı gösteriliyor. VALT yüzlük ft cinsinden (120 = 12000 ft). INC/DEC VALT\'ı 100 ft değiştirir.':'VNAV çalışmıyor: '+c.why+'.'};};
+ hint:c.ok?'VNAV aktif: referans süzülüş/tırmanış açısı gösteriliyor. W3: VANG girişinde ± ile + (tırmanış) / − (süzülüş) seçilir. VALT yüzlük ft cinsinden (120 = 12000 ft). INC/DEC VALT\'ı 100 ft değiştirir.':'VNAV çalışmıyor: '+c.why+'.'};};
 /* NAV TUNE */
+const wow=()=>ac.agl<=0&&ac.gs<60;
 const octal=(s,n)=>s.length===n&&/^[0-7]+$/.test(s);
 PG.NAVTUNE=()=>{const t=S.nt,on=S.pw.nav;const tap=()=>{S.nt=cyc(['VOR','TCN','IFF'],t);};
  const nav={name:'NAV TUNE · '+t,navtune:tap};
- if(t==='VOR'){const v=S.vor,f=vorF(),tenth=Math.round(f/10)%10,ils=f>=10800&&f<=11195&&tenth%2===1;
+ if(t==='VOR'){const v=S.vor,f=vorF(),tenth=Math.floor(f/10)%10,ils=f>=10800&&f<=11195&&tenth%2===1;
   return{...nav,w:[on?{l:ils?'ILS':'VOR',r:v.p?v.p:'M',edit:numSpec(2,s=>{const n=intIn(s,0,20);if(n==null)return false;v.p=n;return true;},{min:1})}:{l:'VOR',r:'OFF'},
    on?{r:(f/100).toFixed(2),edit:{mask:'###.##',commit:s=>{const k=parseInt(s,10);if(k<10800||k>11795||k%5)return'VOR/ILS 108.00-117.95 MHz, 50 kHz adım';if(v.p)v.pre[v.p]=k;else v.man=k;return true;}}}:BL,
    {l:''},on?{l:S.tcn.mode==='SLV'?'TCN SLV':'TCN NORM'}:BL],inc:d=>{if(on)v.p=wrap(v.p,0,20,d);},hint:'Her NAV TUNE basışı VOR/ILS → TACAN → IFF sırasıyla döner. W2: frekans (5 hane, örn. 11590). Güç kapalıysa OFF görünür.'};}
  if(t==='TCN'){const c=S.tcn,cur=tcnC();
   return{...nav,w:[on?{l:'TCN',r:c.p?c.p:'M',edit:numSpec(2,s=>{const n=intIn(s,0,20);if(n==null)return false;c.p=n;return true;},{min:1})}:{l:'TCN',r:'OFF'},
-   on?{r:tcnStr(cur),edit:{mask:'###p',pmOpts:['X','Y'],min:1,commit:(s,pm)=>{const n=intIn(s,0,126);if(n==null)return'Kanal 0-126';const o={ch:n,xy:pm?'Y':'X'};if(c.p)c.pre[c.p]=o;else c.man=o;return true;}}}:BL,BL,
-   on?{r:c.mode,tap:()=>{c.mode=cyc(['REC','T/R','SLV'],c.mode);}}:BL],inc:d=>{if(on)c.p=wrap(c.p,0,20,d);},hint:'W2: kanal numarası, ± ile X/Y. W4: REC → T/R → SLV döngüsü.'};}
- const f=S.iff,off=S.pw.iff==='OFF',pr=f.p?f.pre[f.p]:f.man,modes=['M1','M2','M3A','MC','TIME'],m=modes[f.mi];
- const code=m==='TIME'?(()=>{const d=new Date();return p2(d.getUTCHours())+':'+p2(d.getUTCMinutes());})():m==='MC'?'':pr[m];
+   on?{r:tcnStr(cur),lock:c.mode==='SLV'?'SLV modunda kanal VOR/ILS frekansına bağlıdır (W4 ile modu değiştir)':null,edit:{mask:'###p',pmOpts:['X','Y'],min:1,commit:(s,pm)=>{const n=intIn(s,0,126);if(n==null)return'Kanal 0-126';const o={ch:n,xy:pm?'Y':'X'};if(c.p)c.pre[c.p]=o;else c.man=o;return true;}}}:BL,BL,
+   on?{r:c.mode,tap:()=>{c.mode=cyc(['REC','T/R','SLV'],c.mode);}}:BL],inc:d=>{if(on)c.p=wrap(c.p,0,20,d);},hint:'W2: kanal numarası, ± ile X/Y. W4: REC (yalnız istikamet) → T/R (istikamet + mesafe) → SLV (kanal VOR/ILS frekansına bağlanır) → REC.'};}
+ const f=S.iff,off=S.pw.iff==='OFF',pr=f.p?f.pre[f.p]:f.man,modes=['M1','M2','M3A','MC','M4','TIME'],m=modes[f.mi];
+ const code=m==='TIME'?(()=>{const d=new Date();return p2(d.getUTCHours())+':'+p2(d.getUTCMinutes());})():m==='MC'||m==='M4'?'':pr[m];
  return{...nav,w:[off?{l:'IFF',r:'OFF'}:{l:'IFF',r:f.p?f.p:'M',edit:numSpec(1,s=>{const n=intIn(s,0,8);if(n==null)return'Ön ayar 1-8, 0 = manuel';f.p=n;return true;})},
-  off?BL:{l:pr.en[m]?'•':'',r:m,tap:()=>{f.mi=(f.mi+1)%5;}},
-  off||m==='MC'||m==='TIME'?{r:code}:{r:code,edit:numSpec(m==='M1'?2:4,s=>{if(!octal(s,s.length))return'Kod sekizlik (0-7) olmalı';pr[m]=s;return true;})},
-  off?BL:{l:S.pw.iff,r:''}],pm:()=>{if(!off&&m!=='TIME')pr.en[m]=!pr.en[m];},inc:d=>{if(!off)f.p=wrap(f.p,0,8,d);},
-  hint:'W2: mod seçimi (M1, M2, M3A, MC, TIME). ± o modu açar/kapatır (•). W3: kod (sekizlik). ID tuşu kimlik gönderir.'};};
+  off?BL:{l:pr.en[m]?'•':'',r:m,tap:()=>{f.mi=(f.mi+1)%6;}},
+  off||m==='MC'||m==='M4'||m==='TIME'?{r:code}:{r:code,lock:m==='M2'&&!wow()?'Mod 2 kodu yalnız WOW ON iken girilir (AGL = 0)':null,edit:numSpec(m==='M1'?2:4,s=>{if(!octal(s,s.length))return'Kod sekizlik (0-7) olmalı';pr[m]=s;return true;})},
+  off?BL:{l:S.pw.iff,r:''}],pm:()=>{if(off){msg('IFF şalteri OFF: ± işlevsiz');return;}if(m==='TIME'){msg('TIME modunda ± işlevsiz');return;}const e=pr.en;e[m]=!e[m];if((m==='M3A'||m==='MC')&&!e[m]){e.M3A=false;e.MC=false;msg('Mod 3 ve Mod C birlikte devre dışı kalır');}else msg(m+(e[m]?' aktif (•)':' devre dışı'));},inc:d=>{if(!off)f.p=wrap(f.p,0,8,d);},
+  hint:'W2: mod seçimi (M1, M2, M3A, MC, M4, TIME). ± o modu açar/kapatır (•); Mod 3 ve Mod C birlikte kapanır. W3: kod (sekizlik); Mod 2 kodu yalnız WOW ON iken girilir. ID tuşu kimlik gönderir.'};};
 /* COM */
 const validFreq=k=>{if(![[30000,87975],[108000,155975],[156000,173975],[225000,399975]].some(([a,b])=>k>=a&&k<=b))return false;if(k>=118000&&k<=136990){const m=k%25;return m===0||m===5||m===10||m===15;}return k%25===0;};
 const fstr=o=>o.hq?'A'+((o.k-300000)/1000).toFixed(3).padStart(6,'0'):(o.k/1000).toFixed(3);
@@ -340,7 +343,7 @@ PG.SYS=()=>{const y=S.sys;
   inc:d=>{if(y.sel===0)y.ralt=clamp(y.ralt+10*d,0,2500);else if(y.sel===1)y.bar=clamp(y.bar+100*d,0,35000);else if(y.sel===3)y.set=clamp(y.set+d,lo,hi);else msg('Önce bir pencereye bir kez bas (seç)');},
   hint:'Pencereye 1 kez bas = INC/DEC için seç; 1 sn içinde 2 kez bas = rakam girişi. W4 2 sn basılı = standart (29.92 / 1013).'};}
  if(y.sub===2)return{...base,name:'SYS · HEADING',w:[{l:'HDG',r:n3(y.hdg),edit:numSpec(3,s=>{const n=intIn(s,0,360);if(n==null)return false;y.hdg=n%360;return true;},{min:1,empty:()=>{y.hdg=Math.round(ac.hdg);}}),},
-   {r:y.ref,tap:()=>{y.ref=y.ref==='MAG'?'TRUE':'MAG';}},{l:'BRG1',r:y.b1,tap:()=>{y.b1=cyc(['OFF','EGI','VOR','TCN'],y.b1);}},{l:'BRG2',r:y.b2,tap:()=>{y.b2=cyc(['OFF','EGI','VOR','TCN'],y.b2);}}],
+   {r:y.ref,tap:()=>{y.ref=y.ref==='MAG'?'TRUE':'MAG';}},{l:'BRG1',r:y.b1,tap:()=>{y.b1=cyc(['OFF','EGI','SEQ','VOR','TCN'],y.b1);}},{l:'BRG2',r:y.b2,tap:()=>{y.b2=cyc(['OFF','EGI','SEQ','VOR','TCN'],y.b2);}}],
    inc:d=>{y.hdg=wrap(y.hdg,0,359,d);},hint:'W1: heading cue (INC/DEC, ya da W1 sonra boş ENT = mevcut heading). W2: MAG/TRUE. W3/W4: bearing pointer kaynakları.'};
  if(y.sub===3)return{...base,name:'SYS · SPEED',w:[{l:'SPD',r:y.spd,edit:numSpec(3,s=>{const n=intIn(s,0,999);if(n==null)return false;y.spd=n;return true;},{min:1})},{r:y.st,tap:()=>{y.st=cyc(['GS','IAS','TAS'],y.st);}},BL,BL],inc:d=>{y.spd=clamp(y.spd+d,0,999);},hint:'W1: speed cue (INC/DEC). W2: HUD hız göstergesi GS/IAS/TAS.'};
  const al=S.fuel!=='NORMAL'&&!S.fuelAck;
@@ -366,7 +369,7 @@ PG.DIR=()=>{const b=navBase(),tg=b?b.pt:null,d=tg?dist(ac,tg):null,br=tg?bearing
   hint:'W1 → ± → ICAO (örn. LTAC) veya waypoint numarası → ENT: o noktaya Direct-To ve course otomatik. W2: mesafe NM · W3: kalan süre/yer hızı · W4: bearing.'};};
 /* BLANK: radyo/nav özet sayfası (sunum s.83) */
 PG.BLANK=()=>{const pn=(i,on)=>on?(S.com[i].p===41?'M':p2(S.com[i].p)):'--';
- const f=S.iff,pr=f.p?f.pre[f.p]:f.man,tc=tcnC(),vf=vorF(),tenth=Math.round(vf/10)%10,ils=vf>=10800&&vf<=11195&&tenth%2===1;
+ const f=S.iff,pr=f.p?f.pre[f.p]:f.man,tc=tcnC(),vf=vorF(),tenth=Math.floor(vf/10)%10,ils=vf>=10800&&vf<=11195&&tenth%2===1;
  return{name:'BLANK · COM / IFF / TACAN / VOR özeti',w:[
   {l:pn(0,S.pw.c1)+' / '+pn(1,S.pw.c2)},
   S.pw.iff==='OFF'?{l:'IFF OFF'}:{l:S.pw.iff,r:pr.M3A},
@@ -432,7 +435,7 @@ function render(){
  if(tg){const d=dist(ac,tg.pt),br=bearing(ac,tg.pt),crs=(S.crs[S.sub]+(S.sys.ref==='MAG'?MAGVAR:0)+360)%360,xt=d*Math.sin(angd(br,crs)*RAD);
   nv=[tg.label+(tg.off?' (offset)':''),d.toFixed(1)+' NM',n3((br-MAGVAR+360)%360)+'°M',ac.gs>0?hms(d/ac.gs*3600000):'--:--:--',Math.abs(xt).toFixed(1)+' NM '+(xt>0?'L':'R')];}
  const vc=vnavCalc();
- setH($('#navcard'),[['Aktif nokta',nv[0]],['Mesafe',nv[1]],['Bearing',nv[2]],['ETE',nv[3]],['Çizgi sapması',nv[4]],['Master / alt mod',S.master+' / '+S.sub],['VNAV açısı',S.vnav.on&&vc.ok?vc.ang.toFixed(1)+'°':'—'],['Konum',dms(ac.lat,true)+' '+dms(ac.lon,false)],['Uçuş yolu','HDG '+n3(ac.hdg)+' · GS '+Math.round(ac.gs)]].map(([a,c])=>`<div class="kv"><span>${a}</span><b>${c}</b></div>`).join(''),'nav');
+ setH($('#navcard'),[['Aktif nokta',nv[0]],['Mesafe',nv[1]],['Bearing',nv[2]],['ETE',nv[3]],['Çizgi sapması',nv[4]],['Master / alt mod',S.master+' / '+S.sub],['VNAV açısı',S.vnav.on&&vc.ok?vc.ang.toFixed(1)+'°':'—'],['Konum',dms(ac.lat,true)+' '+dms(ac.lon,false)],['WOW (yerde)',wow()?'ON':'OFF'],['Uçuş yolu','HDG '+n3(ac.hdg)+' · GS '+Math.round(ac.gs)]].map(([a,c])=>`<div class="kv"><span>${a}</span><b>${c}</b></div>`).join(''),'nav');
  /* sim girişleri */
  [['s_hdg',ac.hdg],['s_gs',ac.gs],['s_alt',ac.alt],['s_agl',ac.agl],['s_amb',S.amb]].forEach(([id,v])=>{const el=$('#'+id);if(document.activeElement!==el)el.value=Math.round(v);});
  $('#s_iff').value=S.pw.iff;$('#s_fuel').value=S.fuel;
